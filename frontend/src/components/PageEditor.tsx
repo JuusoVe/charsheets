@@ -1,16 +1,5 @@
-import React, { useState, useRef } from 'react'
-import { DeleteIcon, DragHandleIcon } from '@chakra-ui/icons'
-import {
-  Box,
-  VStack,
-  HStack,
-  IconButton,
-  Popover,
-  PopoverTrigger,
-  Button,
-  PopoverBody,
-  PopoverContent,
-} from '@chakra-ui/react'
+import React, { useState } from 'react'
+import { Box, VStack, HStack, useToast } from '@chakra-ui/react'
 import GridLayout, { Layout } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
@@ -55,14 +44,103 @@ export const PageEditor: React.FC = () => {
     ],
   })
 
+  const toast = useToast()
+
   const handleDeleteSection = (sectionId: string) => {
-    // Implement delete logic here
-    console.log(`Deleting section: ${sectionId}`)
+    setSections((prevSections) =>
+      prevSections.filter((section) => section.id !== sectionId),
+    )
+    setSelectedPage((prevPage) => ({
+      ...prevPage,
+      sections: prevPage.sections.filter((id) => id !== sectionId),
+      layout: prevPage.layout.filter((item) => item.i !== sectionId),
+    }))
   }
 
   const handleDuplicateSection = (sectionId: string) => {
-    // Implement duplicate logic here
-    console.log(`Duplicating section: ${sectionId}`)
+    const sectionToDuplicate = sections.find(
+      (section) => section.id === sectionId,
+    )
+    if (!sectionToDuplicate) return
+
+    const newSectionId = `s${Date.now()}`
+    const newSection: Section = {
+      id: newSectionId,
+      content: sectionToDuplicate.content,
+    }
+
+    const originalLayout = selectedPage.layout.find(
+      (item) => item.i === sectionId,
+    )
+    if (!originalLayout) return
+
+    const availableSpot = findAvailableSpot(selectedPage.layout, originalLayout)
+
+    if (!availableSpot) {
+      toast({
+        title: 'No space available',
+        description: "There's no space to duplicate this section.",
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+      return
+    }
+
+    setSections((prevSections) => [...prevSections, newSection])
+
+    setSelectedPage((prevPage) => {
+      const sectionIndex = prevPage.sections.indexOf(sectionId)
+      const newSections = [...prevPage.sections]
+      newSections.splice(sectionIndex + 1, 0, newSectionId)
+
+      const newLayout: Layout = {
+        ...originalLayout,
+        i: newSectionId,
+        x: availableSpot.x,
+        y: availableSpot.y,
+      }
+
+      return {
+        ...prevPage,
+        sections: newSections,
+        layout: [...prevPage.layout, newLayout],
+      }
+    })
+  }
+
+  const findAvailableSpot = (
+    layout: Layout[],
+    originalItem: Layout,
+  ): { x: number; y: number } | null => {
+    const maxX = 12 - originalItem.w
+    const maxY = 16 - originalItem.h
+
+    for (let y = 0; y <= maxY; y++) {
+      for (let x = 0; x <= maxX; x++) {
+        if (isSpotAvailable(layout, x, y, originalItem.w, originalItem.h)) {
+          return { x, y }
+        }
+      }
+    }
+
+    return null
+  }
+
+  const isSpotAvailable = (
+    layout: Layout[],
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+  ): boolean => {
+    return !layout.some(
+      (item) =>
+        x < item.x + item.w &&
+        x + w > item.x &&
+        y < item.y + item.h &&
+        y + h > item.y,
+    )
   }
 
   const onLayoutChange = (newLayout: Layout[]) => {
