@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Box, VStack, HStack, useToast } from '@chakra-ui/react'
+import { Box, VStack, HStack, useToast, Flex } from '@chakra-ui/react'
 import GridLayout, { Layout } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
@@ -154,60 +154,59 @@ export const PageEditor: React.FC = () => {
 
   const ROWS = 16
   const ROW_HEIGHT = 60
-  const totalHeight = ROWS * ROW_HEIGHT + 240
+  const totalHeight = ROWS * ROW_HEIGHT + 200
 
   const pageSections = selectedPage.sections
     .map((sectionId) => sections.find((section) => section.id === sectionId))
     .filter(Boolean) as Section[]
 
   return (
-    <Box
+    <Flex
       boxShadow={'md'}
       bgColor={'white'}
       borderRadius={'md'}
       p={4}
-      h={`${totalHeight}px`}>
-      <VStack align="start" spacing={4}>
-        <HStack alignSelf="flex-end"></HStack>
-        {selectedPage.type === 'custom' && (
-          <GridLayout
-            className="layout"
-            layout={selectedPage.layout}
-            cols={12}
-            maxRows={16}
-            rowHeight={ROW_HEIGHT}
-            width={1440}
-            onLayoutChange={onLayoutChange}
-            draggableHandle=".drag-handle"
-            compactType={null}
-            preventCollision={true}
-            autoSize={false}>
-            {pageSections.map((section) => {
-              return (
-                <Box
+      h={`${totalHeight}px`}
+      w={1200 + 32}
+      flex={1}>
+      {selectedPage.type === 'custom' && (
+        <GridLayout
+          className="layout"
+          layout={selectedPage.layout}
+          cols={12}
+          maxRows={16}
+          rowHeight={ROW_HEIGHT}
+          width={1200}
+          onLayoutChange={onLayoutChange}
+          draggableHandle=".drag-handle"
+          compactType={null}
+          preventCollision={true}
+          autoSize={false}>
+          {pageSections.map((section) => {
+            return (
+              <Box
+                key={section.id}
+                borderWidth="1px"
+                borderRadius="md"
+                bg="white"
+                display="flex"
+                flexDirection="column"
+                boxShadow="sm">
+                <SectionPopoverMenu
+                  sectionId={section.id}
+                  onDeleteSection={handleDeleteSection}
+                  onDuplicateSection={handleDuplicateSection}
+                />
+                <SectionEditor
                   key={section.id}
-                  borderWidth="1px"
-                  borderRadius="md"
-                  bg="white"
-                  display="flex"
-                  flexDirection="column"
-                  boxShadow="sm">
-                  <SectionPopoverMenu
-                    sectionId={section.id}
-                    onDeleteSection={handleDeleteSection}
-                    onDuplicateSection={handleDuplicateSection}
-                  />
-                  <SectionEditor
-                    key={section.id}
-                    sectionId={section.id}
-                    content={section.content}
-                  />
-                </Box>
-              )
-            })}
-          </GridLayout>
-        )}
-      </VStack>
-    </Box>
+                  sectionId={section.id}
+                  content={section.content}
+                />
+              </Box>
+            )
+          })}
+        </GridLayout>
+      )}
+    </Flex>
   )
 }
