@@ -21,15 +21,6 @@ export const CharacterSheetsPage: React.FC = () => {
       <Box mx="auto" p={4}>
         <Flex>
           <Box flex="1" mr={4}>
-            <Dropdown
-              options={SHEETS.map((sheet) => ({
-                label: sheet.name,
-                value: sheet.id,
-              }))}
-              w={40}
-              mb={4}
-            />
-
             <SheetEditor />
           </Box>
         </Flex>

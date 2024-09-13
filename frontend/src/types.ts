@@ -1,13 +1,15 @@
+import { Layout } from 'react-grid-layout'
+
 type Section = {
   id: string
   content: string
-  size: { w: number; h: number } // Width and height in grid cells
-  position: { x: number; y: number } // Grid position (optional for this implementation)
 }
 
-export interface Page {
+type Page = {
   id: string
+  type: 'uploaded' | 'custom'
   sections: Section['id'][]
+  layout: Layout[]
 }
 
 export interface CharacterSheet {
