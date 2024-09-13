@@ -176,7 +176,7 @@ export const PageEditor: React.FC = () => {
             cols={12}
             maxRows={16}
             rowHeight={ROW_HEIGHT}
-            width={1200}
+            width={1440}
             onLayoutChange={onLayoutChange}
             draggableHandle=".drag-handle"
             compactType={null}
