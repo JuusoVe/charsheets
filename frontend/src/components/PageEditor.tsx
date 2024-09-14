@@ -15,7 +15,6 @@ export const PageEditor: React.FC = () => {
 
   const [selectedPage, setSelectedPage] = useState<Page>({
     id: '1',
-    type: 'custom',
     sections: DEFAULT_SECTIONS.map(({ id }) => id),
     layout: DEFAULT_SECTIONS,
   })
@@ -29,7 +28,6 @@ export const PageEditor: React.FC = () => {
     setSelectedPage((prevPage) => ({
       ...prevPage,
       sections: prevPage.sections.filter((id) => id !== sectionId),
-      layout: prevPage.layout.filter((item) => item.id !== sectionId),
     }))
   }
 
