@@ -19,12 +19,13 @@ import {
   getDocs,
 } from 'firebase/firestore'
 import { db as dbFromConfig } from './firebase'
+import { CharacterSheet, Field, Page, Section } from '../types'
 
 interface WithId {
   id: string
 }
 
-interface Filter<T> {
+export interface Filter<T> {
   field: keyof T
   opStr: WhereFilterOp
   value: unknown
@@ -171,13 +172,21 @@ const createCollectionController = <T extends WithId>(
 export const createClients = (dbToUse?: Firestore) => {
   const db = dbToUse ?? dbFromConfig
   return {
-    // productVariantsClient: createCollectionController<ProductVariant>(
-    //   'products',
-    //   db,
-    // ),
+    characterSheets: createCollectionController<CharacterSheet>(
+      'characterSheets',
+      db,
+    ),
+    pages: createCollectionController<Page>('pages', db),
+    sections: createCollectionController<Section>('sections', db),
+    fields: createCollectionController<Field>('fields', db),
   }
 }
 
-const {} = createClients()
+const {
+  characterSheets: characterSheetsClient,
+  pages: pagesClient,
+  sections: sectionsClient,
+  fields: fieldsClient,
+} = createClients()
 
-export {}
+export { characterSheetsClient, pagesClient, sectionsClient, fieldsClient }

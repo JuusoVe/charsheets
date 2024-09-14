@@ -12,8 +12,7 @@ export const SectionEditor: React.FC<SectionEditorProps> = ({
 }) => {
   return (
     <Box>
-      <Text fontWeight="bold">ID: {sectionId}</Text>
-      <Text>{content}</Text>
+      <Text contentEditable>{content}</Text>
     </Box>
   )
 }

@@ -1,3 +1,23 @@
+interface FieldBase {
+  id: string
+}
+export interface TextAreaField extends FieldBase {
+  type: 'textarea'
+  content: string
+}
+
+interface ValueAndTitle {
+  value: string
+  title: string
+}
+
+export interface ValuesAndTitlesListField extends FieldBase {
+  type: 'values_and_titles_list'
+  values: ValueAndTitle[]
+}
+
+export type Field = TextAreaField | ValuesAndTitlesListField
+
 export interface Section {
   id: string
   title: string
@@ -5,13 +25,12 @@ export interface Section {
   y: number
   w: number
   h: number
+  fields: Field[]
 }
 
 export interface Page {
   id: string
-  type: 'uploaded' | 'custom'
   sections: Section['id'][]
-  layout: Section[]
 }
 
 export interface CharacterSheet {
