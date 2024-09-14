@@ -16,7 +16,6 @@ export const PageEditor: React.FC = () => {
   const [selectedPage, setSelectedPage] = useState<Page>({
     id: '1',
     sections: DEFAULT_SECTIONS.map(({ id }) => id),
-    layout: DEFAULT_SECTIONS,
   })
 
   const toast = useToast()
@@ -38,10 +37,7 @@ export const PageEditor: React.FC = () => {
     if (!sectionToDuplicate) return
 
     const newSectionId = `s${Date.now()}`
-    const availableSpot = findAvailableSpot(
-      selectedPage.layout,
-      sectionToDuplicate,
-    )
+    const availableSpot = findAvailableSpot(sections, sectionToDuplicate)
 
     if (!availableSpot) {
       toast({
@@ -62,11 +58,9 @@ export const PageEditor: React.FC = () => {
     }
 
     setSections((prevSections) => [...prevSections, newSection])
-
     setSelectedPage((prevPage) => ({
       ...prevPage,
       sections: [...prevPage.sections, newSectionId],
-      layout: [...prevPage.layout, newSection],
     }))
   }
 
@@ -107,9 +101,8 @@ export const PageEditor: React.FC = () => {
   const onLayoutChange = (newLayout: Layout[]) => {
     const validLayout = newLayout.filter((item) => item.y + item.h <= 16)
 
-    setSelectedPage((prev) => ({
-      ...prev,
-      layout: prev.layout.map((section) => {
+    setSections((prevSections) =>
+      prevSections.map((section) => {
         const updatedLayout = validLayout.find((item) => item.i === section.id)
         return updatedLayout
           ? {
@@ -121,7 +114,7 @@ export const PageEditor: React.FC = () => {
             }
           : section
       }),
-    }))
+    )
   }
 
   const ROWS = 16
@@ -141,48 +134,46 @@ export const PageEditor: React.FC = () => {
       h={`${totalHeight}px`}
       w={1200 + 32}
       flex={1}>
-      {selectedPage.type === 'custom' && (
-        <GridLayout
-          className="layout"
-          layout={selectedPage.layout.map(({ id, x, y, w, h }) => ({
-            i: id,
-            x,
-            y,
-            w,
-            h,
-          }))}
-          cols={12}
-          maxRows={16}
-          rowHeight={ROW_HEIGHT}
-          width={1200}
-          onLayoutChange={onLayoutChange}
-          draggableHandle=".drag-handle"
-          compactType={null}
-          preventCollision={true}
-          autoSize={false}>
-          {pageSections.map((section) => (
-            <Box
+      <GridLayout
+        className="layout"
+        layout={pageSections.map(({ id, x, y, w, h }) => ({
+          i: id,
+          x,
+          y,
+          w,
+          h,
+        }))}
+        cols={12}
+        maxRows={16}
+        rowHeight={ROW_HEIGHT}
+        width={1200}
+        onLayoutChange={onLayoutChange}
+        draggableHandle=".drag-handle"
+        compactType={null}
+        preventCollision={true}
+        autoSize={false}>
+        {pageSections.map((section) => (
+          <Box
+            key={section.id}
+            borderWidth="1px"
+            borderRadius="md"
+            bg="white"
+            display="flex"
+            flexDirection="column"
+            boxShadow="sm">
+            <SectionPopoverMenu
+              sectionId={section.id}
+              onDeleteSection={handleDeleteSection}
+              onDuplicateSection={handleDuplicateSection}
+            />
+            <SectionEditor
               key={section.id}
-              borderWidth="1px"
-              borderRadius="md"
-              bg="white"
-              display="flex"
-              flexDirection="column"
-              boxShadow="sm">
-              <SectionPopoverMenu
-                sectionId={section.id}
-                onDeleteSection={handleDeleteSection}
-                onDuplicateSection={handleDuplicateSection}
-              />
-              <SectionEditor
-                key={section.id}
-                sectionId={section.id}
-                content={section.title}
-              />
-            </Box>
-          ))}
-        </GridLayout>
-      )}
+              sectionId={section.id}
+              content={section.title}
+            />
+          </Box>
+        ))}
+      </GridLayout>
     </Flex>
   )
 }
