@@ -1,47 +1,23 @@
 import React, { useState } from 'react'
-import { Box, VStack, HStack, useToast, Flex } from '@chakra-ui/react'
+import { Box, useToast, Flex } from '@chakra-ui/react'
 import GridLayout, { Layout } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { SectionEditor } from './SectionEditor'
 import { SectionPopoverMenu } from './SectionPopoverMenu'
+import { ai_layout } from '../constats'
+import { Section, Page } from '../types'
 
-type Section = {
-  id: string
-  content: string
-}
-
-type Page = {
-  id: string
-  type: 'uploaded' | 'custom'
-  sections: Section['id'][]
-  layout: Layout[]
-}
+const DEFAULT_SECTIONS: Section[] = ai_layout
 
 export const PageEditor: React.FC = () => {
-  const [sections, setSections] = useState<Section[]>([
-    { id: 's1', content: 'Section 1' },
-    { id: 's2', content: 'Section 2' },
-    { id: 's3', content: 'Section 3' },
-    { id: 's4', content: 'Section 4 (Large)' },
-    { id: 's5', content: 'Section 5' },
-    { id: 's6', content: 'Section 6' },
-    { id: 's7', content: 'Section 7' },
-  ])
+  const [sections, setSections] = useState<Section[]>(DEFAULT_SECTIONS)
 
   const [selectedPage, setSelectedPage] = useState<Page>({
     id: '1',
     type: 'custom',
-    sections: ['s1', 's2', 's3', 's4', 's5', 's6', 's7'],
-    layout: [
-      { i: 's1', x: 0, y: 0, w: 2, h: 2 },
-      { i: 's2', x: 2, y: 0, w: 2, h: 2 },
-      { i: 's3', x: 4, y: 0, w: 2, h: 2 },
-      { i: 's4', x: 0, y: 2, w: 4, h: 2 },
-      { i: 's5', x: 4, y: 2, w: 2, h: 4 },
-      { i: 's6', x: 0, y: 4, w: 2, h: 2 },
-      { i: 's7', x: 2, y: 4, w: 2, h: 2 },
-    ],
+    sections: DEFAULT_SECTIONS.map(({ id }) => id),
+    layout: DEFAULT_SECTIONS,
   })
 
   const toast = useToast()
@@ -53,7 +29,7 @@ export const PageEditor: React.FC = () => {
     setSelectedPage((prevPage) => ({
       ...prevPage,
       sections: prevPage.sections.filter((id) => id !== sectionId),
-      layout: prevPage.layout.filter((item) => item.i !== sectionId),
+      layout: prevPage.layout.filter((item) => item.id !== sectionId),
     }))
   }
 
@@ -64,17 +40,10 @@ export const PageEditor: React.FC = () => {
     if (!sectionToDuplicate) return
 
     const newSectionId = `s${Date.now()}`
-    const newSection: Section = {
-      id: newSectionId,
-      content: sectionToDuplicate.content,
-    }
-
-    const originalLayout = selectedPage.layout.find(
-      (item) => item.i === sectionId,
+    const availableSpot = findAvailableSpot(
+      selectedPage.layout,
+      sectionToDuplicate,
     )
-    if (!originalLayout) return
-
-    const availableSpot = findAvailableSpot(selectedPage.layout, originalLayout)
 
     if (!availableSpot) {
       toast({
@@ -87,31 +56,25 @@ export const PageEditor: React.FC = () => {
       return
     }
 
+    const newSection: Section = {
+      ...sectionToDuplicate,
+      id: newSectionId,
+      x: availableSpot.x,
+      y: availableSpot.y,
+    }
+
     setSections((prevSections) => [...prevSections, newSection])
 
-    setSelectedPage((prevPage) => {
-      const sectionIndex = prevPage.sections.indexOf(sectionId)
-      const newSections = [...prevPage.sections]
-      newSections.splice(sectionIndex + 1, 0, newSectionId)
-
-      const newLayout: Layout = {
-        ...originalLayout,
-        i: newSectionId,
-        x: availableSpot.x,
-        y: availableSpot.y,
-      }
-
-      return {
-        ...prevPage,
-        sections: newSections,
-        layout: [...prevPage.layout, newLayout],
-      }
-    })
+    setSelectedPage((prevPage) => ({
+      ...prevPage,
+      sections: [...prevPage.sections, newSectionId],
+      layout: [...prevPage.layout, newSection],
+    }))
   }
 
   const findAvailableSpot = (
-    layout: Layout[],
-    originalItem: Layout,
+    layout: Section[],
+    originalItem: Section,
   ): { x: number; y: number } | null => {
     const maxX = 12 - originalItem.w
     const maxY = 16 - originalItem.h
@@ -128,7 +91,7 @@ export const PageEditor: React.FC = () => {
   }
 
   const isSpotAvailable = (
-    layout: Layout[],
+    layout: Section[],
     x: number,
     y: number,
     w: number,
@@ -148,7 +111,18 @@ export const PageEditor: React.FC = () => {
 
     setSelectedPage((prev) => ({
       ...prev,
-      layout: validLayout,
+      layout: prev.layout.map((section) => {
+        const updatedLayout = validLayout.find((item) => item.i === section.id)
+        return updatedLayout
+          ? {
+              ...section,
+              x: updatedLayout.x,
+              y: updatedLayout.y,
+              w: updatedLayout.w,
+              h: updatedLayout.h,
+            }
+          : section
+      }),
     }))
   }
 
@@ -172,7 +146,13 @@ export const PageEditor: React.FC = () => {
       {selectedPage.type === 'custom' && (
         <GridLayout
           className="layout"
-          layout={selectedPage.layout}
+          layout={selectedPage.layout.map(({ id, x, y, w, h }) => ({
+            i: id,
+            x,
+            y,
+            w,
+            h,
+          }))}
           cols={12}
           maxRows={16}
           rowHeight={ROW_HEIGHT}
@@ -182,29 +162,27 @@ export const PageEditor: React.FC = () => {
           compactType={null}
           preventCollision={true}
           autoSize={false}>
-          {pageSections.map((section) => {
-            return (
-              <Box
+          {pageSections.map((section) => (
+            <Box
+              key={section.id}
+              borderWidth="1px"
+              borderRadius="md"
+              bg="white"
+              display="flex"
+              flexDirection="column"
+              boxShadow="sm">
+              <SectionPopoverMenu
+                sectionId={section.id}
+                onDeleteSection={handleDeleteSection}
+                onDuplicateSection={handleDuplicateSection}
+              />
+              <SectionEditor
                 key={section.id}
-                borderWidth="1px"
-                borderRadius="md"
-                bg="white"
-                display="flex"
-                flexDirection="column"
-                boxShadow="sm">
-                <SectionPopoverMenu
-                  sectionId={section.id}
-                  onDeleteSection={handleDeleteSection}
-                  onDuplicateSection={handleDuplicateSection}
-                />
-                <SectionEditor
-                  key={section.id}
-                  sectionId={section.id}
-                  content={section.content}
-                />
-              </Box>
-            )
-          })}
+                sectionId={section.id}
+                content={section.title}
+              />
+            </Box>
+          ))}
         </GridLayout>
       )}
     </Flex>

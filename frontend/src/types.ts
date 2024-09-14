@@ -1,15 +1,17 @@
-import { Layout } from 'react-grid-layout'
-
-type Section = {
+export interface Section {
   id: string
-  content: string
+  title: string
+  x: number
+  y: number
+  w: number
+  h: number
 }
 
-type Page = {
+export interface Page {
   id: string
   type: 'uploaded' | 'custom'
   sections: Section['id'][]
-  layout: Layout[]
+  layout: Section[]
 }
 
 export interface CharacterSheet {

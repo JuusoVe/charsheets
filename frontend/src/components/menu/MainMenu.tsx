@@ -30,7 +30,7 @@ interface MenuItem {
 const MAIN_MENU_ITEMS: MenuItem[] = [
   {
     icon: <GrDocumentPdf />,
-    label: 'Price lists',
+    label: 'My sheets',
     path: PATHS.SHEETS,
   },
 ]
